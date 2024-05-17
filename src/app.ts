@@ -5,7 +5,7 @@ import siteRouter from "./routes/siteRoutes";
 import mangaRouter from "./routes/mangaRoutes";
 
 const PORT = process.env.PORT || 8000;
-const app = express();
+export const app = express();
 
 app.use(json());
 app.use(urlencoded({ extended: true }));
