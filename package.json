@@ -6,7 +6,7 @@
     "author": "A-DBN <adabin@hotmail.fr>",
     "license": "MIT",
     "scripts": {
-        "test": "jest",
+        "test": "jest --coverage",
         "start": "tsc && node dist/app.js",
         "dev": "ts-node-dev src/app.ts",
         "lint": "eslint .",

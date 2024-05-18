@@ -12,96 +12,114 @@ import {
 } from "../models/mangaModel";
 import { getSiteFromName } from "../models/siteModel";
 
-export const getMangasController = async (req: Request, res: Response): Promise<void> => {
+export const getMangasController = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
     try {
         const mangas: MangaInfo[] = await getMangaList();
-        if (mangas.length === 0) res.status(404).send("No mangas found");
+        if (mangas.length === 0) return res.status(404).send("No mangas found");
 
-        res.status(200).send(mangas);
+        return res.status(200).send(mangas);
     } catch (error) {
-        res.status(500).send(error);
+        return res.status(500).send((error as Error).message);
     }
 };
 
-export const getMangaFromNameController = async (req: Request, res: Response): Promise<void> => {
+export const getMangaFromNameController = async (
+    req: Request,
+    res: Response
+): Promise<Response<any, Record<string, any>>> => {
     const name: string = req.params.name;
 
     try {
         const manga: MangaInfo | null = await getMangaFromName(name);
-        if (!manga) res.status(404).send("Manga not found");
+        if (!manga) return res.status(404).send("Manga not found");
 
-        res.status(200).send(manga);
+        return res.status(200).send(manga);
     } catch (error) {
-        res.status(500).send(error);
+        return res.status(500).send((error as Error).message);
     }
 };
 
-export const getMangaFromSiteController = async (req: Request, res: Response): Promise<void> => {
+export const getMangaFromSiteController = async (
+    req: Request,
+    res: Response
+): Promise<Response<any, Record<string, any>>> => {
     const site: string = req.params.site;
 
     try {
         const manga: MangaInfo | null = await getMangaFromSite(site);
-        if (!manga) res.status(404).send("Manga not found");
+        if (!manga) return res.status(404).send("Manga not found");
 
-        res.status(200).send(manga);
+        return res.status(200).send(manga);
     } catch (error) {
-        res.status(500).send(error);
+        return res.status(500).send((error as Error).message);
     }
 };
 
-export const addMangaController = async (req: Request, res: Response): Promise<void> => {
+export const addMangaController = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
     const manga: MangaInfo = req.body;
 
     try {
         await addManga(manga);
-        res.status(201).send("Manga added");
+        return res.status(201).send("Manga added");
     } catch (error) {
-        res.status(500).send(error);
+        return res.status(500).send((error as Error).message);
     }
 };
 
-export const addSiteToMangaController = async (req: Request, res: Response): Promise<void> => {
+export const addSiteToMangaController = async (
+    req: Request,
+    res: Response
+): Promise<Response<any, Record<string, any>>> => {
     const { manga, site } = req.body;
 
     try {
         const s = await getSiteFromName(site);
         await addSiteToManga(manga, s);
-        res.status(201).send("Site added to manga");
+        return res.status(201).send("Site added to manga");
     } catch (error) {
-        res.status(500).send(error);
+        return res.status(500).send((error as Error).message);
     }
 };
 
-export const updateMangaController = async (req: Request, res: Response): Promise<void> => {
+export const updateMangaController = async (
+    req: Request,
+    res: Response
+): Promise<Response<any, Record<string, any>>> => {
     const manga: MangaInfo = req.body;
 
     try {
         await updateManga(manga);
-        res.status(200).send("Manga updated");
+        return res.status(200).send("Manga updated");
     } catch (error) {
-        res.status(500).send(error);
+        return res.status(500).send((error as Error).message);
     }
 };
 
-export const deleteMangaController = async (req: Request, res: Response): Promise<void> => {
+export const deleteMangaController = async (
+    req: Request,
+    res: Response
+): Promise<Response<any, Record<string, any>>> => {
     const name: string = req.params.name;
 
     try {
         await deleteManga(name);
-        res.status(200).send("Manga deleted");
+        return res.status(200).send("Manga deleted");
     } catch (error) {
-        res.status(500).send(error);
+        return res.status(500).send((error as Error).message);
     }
 };
 
-export const deleteSiteFromMangaController = async (req: Request, res: Response): Promise<void> => {
+export const deleteSiteFromMangaController = async (
+    req: Request,
+    res: Response
+): Promise<Response<any, Record<string, any>>> => {
     const { manga, site } = req.body;
 
     try {
         const s = await getSiteFromName(site);
         await deleteSiteFromManga(manga, s);
-        res.status(200).send("Site deleted from manga");
+        return res.status(200).send("Site deleted from manga");
     } catch (error) {
-        res.status(500).send(error);
+        return res.status(500).send((error as Error).message);
     }
 };

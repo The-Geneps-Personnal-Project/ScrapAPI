@@ -20,9 +20,9 @@ export const getMangaList = async (): Promise<MangaInfo[]> => {
         mangas.map(async manga => {
             const sites: SiteInfo[] = await db.all(
                 `SELECT s.* FROM sites s
-            JOIN manga_sites ms ON s.id = ms.site_id
-            WHERE ms.manga_id = ?`,
-                [manga.id || 0]
+                JOIN manga_sites ms ON s.id = ms.site_id
+                WHERE ms.manga_id = ?`,
+                [manga.id]
             );
 
             const sitesInfo = sites.map(site => ({
@@ -56,7 +56,7 @@ export const getMangaFromName = async (name: string): Promise<MangaInfo | null> 
         `SELECT s.* FROM sites s
         JOIN manga_sites ms ON s.id = ms.site_id
         WHERE ms.manga_id = ?`,
-        [manga.id || 0]
+        [manga.id]
     );
 
     const sitesInfo = sites.map(site => ({
@@ -92,7 +92,7 @@ export const getMangaFromSite = async (site: string): Promise<MangaInfo | null> 
         `SELECT s.* FROM sites s
         JOIN manga_sites ms ON s.id = ms.site_id
         WHERE ms.manga_id = ?`,
-        [manga.id || 0]
+        [manga.id]
     );
 
     const sitesInfo = sites.map(site => ({

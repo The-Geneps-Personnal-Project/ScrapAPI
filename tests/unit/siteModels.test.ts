@@ -46,6 +46,14 @@ describe("Site Model", () => {
             expect(sites[0]).toHaveProperty("site", "Site A");
             expect(sites[1]).toHaveProperty("site", "Site B");
         });
+
+        it("should return an empty list if there are no sites", async () => {
+            mockDb.all.mockResolvedValueOnce([]);
+
+            const sites = await getSites();
+
+            expect(sites).toHaveLength(0);
+        });
     });
 
     describe("getSiteFromName", () => {

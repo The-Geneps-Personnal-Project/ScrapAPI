@@ -55,6 +55,14 @@ describe("Manga Model", () => {
             expect(mangas[0]).toHaveProperty("name", "Manga One");
             expect(mangas[0].sites[0]).toHaveProperty("site", "Site A");
         });
+
+        it("should return an empty list if there are no mangas", async () => {
+            mockDb.all.mockResolvedValueOnce([]);
+
+            const mangas = await getMangaList();
+
+            expect(mangas).toHaveLength(0);
+        });
     });
 
     describe("getMangaFromName", () => {
@@ -177,6 +185,23 @@ describe("Manga Model", () => {
                 site.id,
             ]);
         });
+
+        it("should not add a site if manga is not found", async () => {
+            const mangaName = "NonExistentManga";
+            const site: SiteInfo = {
+                id: 2,
+                site: "Site B",
+                url: "https://site-b.com/",
+                chapter_url: "https://site-b.com/chapters/",
+                chapter_limiter: "",
+            };
+
+            mockDb.get.mockResolvedValueOnce(undefined);
+
+            await addSiteToManga(mangaName, site);
+
+            expect(mockDb.run).not.toHaveBeenCalled();
+        });
     });
 
     describe("updateManga", () => {
@@ -225,6 +250,16 @@ describe("Manga Model", () => {
 
             expect(mockDb.run).toHaveBeenCalledWith("DELETE FROM mangas WHERE id = ?", [1]);
         });
+
+        it("should not delete a manga if it is not found", async () => {
+            const name = "NonExistentManga";
+
+            mockDb.get.mockResolvedValueOnce(undefined);
+
+            await deleteManga(name);
+
+            expect(mockDb.run).not.toHaveBeenCalled();
+        });
     });
 
     describe("deleteSiteFromManga", () => {
@@ -246,6 +281,23 @@ describe("Manga Model", () => {
                 1,
                 site.id,
             ]);
+        });
+
+        it("should not delete a site if manga is not found", async () => {
+            const mangaName = "NonExistentManga";
+            const site: SiteInfo = {
+                id: 1,
+                site: "Site A",
+                url: "https://site-a.com/",
+                chapter_url: "https://site-a.com/chapters/",
+                chapter_limiter: "",
+            };
+
+            mockDb.get.mockResolvedValueOnce(undefined);
+
+            await deleteSiteFromManga(mangaName, site);
+
+            expect(mockDb.run).not.toHaveBeenCalled();
         });
     });
 });

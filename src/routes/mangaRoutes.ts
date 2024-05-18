@@ -18,7 +18,7 @@ mangaRouter.get("/site/:site", getMangaFromSiteController);
 mangaRouter.post("/", addMangaController);
 mangaRouter.post("/site", addSiteToMangaController);
 mangaRouter.put("/", updateMangaController);
-mangaRouter.delete("/:name", deleteMangaController);
 mangaRouter.delete("/site", deleteSiteFromMangaController);
+mangaRouter.delete("/:name", deleteMangaController);
 
 export default mangaRouter;

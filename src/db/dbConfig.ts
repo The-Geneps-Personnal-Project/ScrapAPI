@@ -31,7 +31,7 @@ export const initializeTestDb = async (db: Database<sqlite3.Database, sqlite3.St
       site TEXT NOT NULL,
       url TEXT NOT NULL,
       chapter_url TEXT NOT NULL,
-      chapter_limiter TEXT NOT NULL,
+      chapter_limiter TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS manga_sites (
@@ -41,6 +41,23 @@ export const initializeTestDb = async (db: Database<sqlite3.Database, sqlite3.St
       FOREIGN KEY (site_id) REFERENCES sites(id),
       PRIMARY KEY (manga_id, site_id)
     );
+
+    INSERT INTO sites (site, url, chapter_url, chapter_limiter) VALUES 
+    ('Site A', 'https://site-a.com', 'https://site-a.com/chapters', '/chapter-'),
+    ('Site B', 'https://site-b.com', 'https://site-b.com/chapters', '-chapter-');
+
+    INSERT INTO mangas (anilist_id, name, chapter, alert) VALUES 
+      (1, 'Manga One', 'Chapter 10', 0),
+      (2, 'Manga Two', 'Chapter 20', 1),
+      (3, 'Manga Three', 'Chapter 30', 0),
+      (4, 'Manga Four', 'Chapter 40', 1);
+
+    INSERT INTO manga_sites (manga_id, site_id) VALUES 
+      (1, 1),
+      (1, 2),
+      (2, 1),
+      (3, 2),
+      (4, 1);
   `);
 };
 

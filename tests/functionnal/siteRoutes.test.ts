@@ -2,76 +2,235 @@ import request from "supertest";
 import { Server } from "http";
 import { app } from "../../src/app";
 import { getDb, closeDb } from "../../src/db/dbConfig";
+import * as siteModel from "../../src/models/siteModel";
+import { SiteInfo } from "../../src/models/siteModel";
 
 let server: Server;
+let port: number;
 
 beforeAll(async () => {
     await getDb(true); // Initialize the in-memory database for testing
-    server = app.listen(0); // Listen on an ephemeral port
 });
 
 afterAll(async () => {
-    await new Promise<void>((resolve, reject) => {
-        server.close(err => (err ? reject(err) : resolve()));
-    });
     await closeDb(); // Close the database connection after all tests
+});
+
+beforeEach(done => {
+    server = app.listen(0, () => {
+        port = (server.address() as any).port;
+        done();
+    });
+});
+
+afterEach(done => {
+    server.close(done);
 });
 
 describe("Site API", () => {
     it("should get all sites", async () => {
-        const res = await request(app).get("/sites");
+        const mockSites: SiteInfo[] = [
+            {
+                id: 1,
+                site: "Site A",
+                url: "https://site-a.com",
+                chapter_url: "https://site-a.com/chapters",
+                chapter_limiter: "/chapter-",
+            },
+            {
+                id: 2,
+                site: "Site B",
+                url: "https://site-b.com",
+                chapter_url: "https://site-b.com/chapters",
+                chapter_limiter: "/chapter-",
+            },
+        ];
+
+        jest.spyOn(siteModel, "getSites").mockResolvedValue(mockSites);
+
+        const res = await request(`http://localhost:${port}`).get("/sites");
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(2); // Assuming there are 2 sites initially
     });
 
+    it("should return 404 if there are no sites", async () => {
+        jest.spyOn(siteModel, "getSites").mockResolvedValue([]);
+
+        const res = await request(`http://localhost:${port}`).get("/sites");
+        expect(res.status).toBe(404);
+        expect(res.text).toBe("No sites found");
+    });
+
     it("should get a site by name", async () => {
-        const res = await request(app).get("/sites/Site%20A");
+        const mockSite: SiteInfo = {
+            id: 1,
+            site: "Site A",
+            url: "https://site-a.com",
+            chapter_url: "https://site-a.com/chapters",
+            chapter_limiter: "/chapter-",
+        };
+
+        jest.spyOn(siteModel, "getSiteFromName").mockResolvedValue(mockSite);
+
+        const res = await request(`http://localhost:${port}`).get("/sites/Site%20A");
         expect(res.status).toBe(200);
         expect(res.body).toHaveProperty("site", "Site A");
     });
 
     it("should return 404 for a non-existent site", async () => {
-        const res = await request(app).get("/sites/NonExistentSite");
+        jest.spyOn(siteModel, "getSiteFromName").mockResolvedValue(null as any);
+
+        const res = await request(`http://localhost:${port}`).get("/sites/NonExistentSite");
         expect(res.status).toBe(404);
         expect(res.text).toBe("Site not found");
     });
 
     it("should create a new site", async () => {
-        const newSite = {
+        jest.spyOn(siteModel, "addSite").mockResolvedValue();
+
+        const newSite: SiteInfo = {
             site: "Site C",
             url: "https://site-c.com",
             chapter_url: "https://site-c.com/chapters",
             chapter_limiter: "/chapter-",
         };
-        const res = await request(app).post("/sites").send(newSite);
+        const res = await request(`http://localhost:${port}`).post("/sites").send(newSite);
         expect(res.status).toBe(201);
         expect(res.text).toBe("Site added");
 
-        const getRes = await request(app).get("/sites");
+        const mockSites: SiteInfo[] = [
+            {
+                id: 1,
+                site: "Site A",
+                url: "https://site-a.com",
+                chapter_url: "https://site-a.com/chapters",
+                chapter_limiter: "/chapter-",
+            },
+            {
+                id: 2,
+                site: "Site B",
+                url: "https://site-b.com",
+                chapter_url: "https://site-b.com/chapters",
+                chapter_limiter: "/chapter-",
+            },
+            {
+                id: 3,
+                site: "Site C",
+                url: "https://site-c.com",
+                chapter_url: "https://site-c.com/chapters",
+                chapter_limiter: "/chapter-",
+            },
+        ];
+
+        jest.spyOn(siteModel, "getSites").mockResolvedValue(mockSites);
+
+        const getRes = await request(`http://localhost:${port}`).get("/sites");
         expect(getRes.body).toHaveLength(3); // Now there should be 3 sites
     });
 
     it("should update an existing site", async () => {
-        const updatedSite = {
+        jest.spyOn(siteModel, "updateSite").mockResolvedValue();
+
+        const updatedSite: SiteInfo = {
             site: "Site A",
             url: "https://site-a-updated.com",
             chapter_url: "https://site-a-updated.com/chapters",
             chapter_limiter: "/chapter-",
         };
-        const res = await request(app).put("/sites").send(updatedSite);
+        const res = await request(`http://localhost:${port}`).put("/sites").send(updatedSite);
         expect(res.status).toBe(200);
         expect(res.text).toBe("Site updated");
 
-        const getRes = await request(app).get("/sites/Site%20A");
+        const mockSite: SiteInfo = {
+            id: 1,
+            site: "Site A",
+            url: "https://site-a-updated.com",
+            chapter_url: "https://site-a-updated.com/chapters",
+            chapter_limiter: "/chapter-",
+        };
+
+        jest.spyOn(siteModel, "getSiteFromName").mockResolvedValue(mockSite);
+
+        const getRes = await request(`http://localhost:${port}`).get("/sites/Site%20A");
         expect(getRes.body).toHaveProperty("url", "https://site-a-updated.com");
     });
 
     it("should delete a site", async () => {
-        const res = await request(app).delete("/sites/Site%20A");
+        jest.spyOn(siteModel, "deleteSite").mockResolvedValue();
+
+        const res = await request(`http://localhost:${port}`).delete("/sites/Site%20A");
         expect(res.status).toBe(200);
         expect(res.text).toBe("Site deleted");
 
-        const getRes = await request(app).get("/sites/Site%20A");
+        jest.spyOn(siteModel, "getSiteFromName").mockResolvedValue(null as any);
+
+        const getRes = await request(`http://localhost:${port}`).get("/sites/Site%20A");
         expect(getRes.status).toBe(404);
+    });
+
+    describe("Error Handling", () => {
+        beforeAll(() => {
+            jest.spyOn(siteModel, "getSites").mockImplementation(() => {
+                throw new Error("Test Error");
+            });
+            jest.spyOn(siteModel, "getSiteFromName").mockImplementation(() => {
+                throw new Error("Test Error");
+            });
+            jest.spyOn(siteModel, "addSite").mockImplementation(() => {
+                throw new Error("Test Error");
+            });
+            jest.spyOn(siteModel, "updateSite").mockImplementation(() => {
+                throw new Error("Test Error");
+            });
+            jest.spyOn(siteModel, "deleteSite").mockImplementation(() => {
+                throw new Error("Test Error");
+            });
+        });
+
+        afterAll(() => {
+            jest.restoreAllMocks();
+        });
+
+        it("should handle error in getSitesController", async () => {
+            const res = await request(`http://localhost:${port}`).get("/sites");
+            expect(res.status).toBe(500);
+            expect(res.text).toBe("Test Error");
+        });
+
+        it("should handle error in getSiteFromNameController", async () => {
+            const res = await request(`http://localhost:${port}`).get("/sites/Site%20A");
+            expect(res.status).toBe(500);
+            expect(res.text).toBe("Test Error");
+        });
+
+        it("should handle error in addSiteController", async () => {
+            const newSite: SiteInfo = {
+                site: "Site C",
+                url: "https://site-c.com",
+                chapter_url: "https://site-c.com/chapters",
+                chapter_limiter: "/chapter-",
+            };
+            const res = await request(`http://localhost:${port}`).post("/sites").send(newSite);
+            expect(res.status).toBe(500);
+            expect(res.text).toBe("Test Error");
+        });
+
+        it("should handle error in updateSiteController", async () => {
+            const updatedSite: SiteInfo = {
+                site: "Site A",
+                url: "https://site-a-updated.com",
+                chapter_url: "https://site-a-updated.com/chapters",
+                chapter_limiter: "/chapter-",
+            };
+            const res = await request(`http://localhost:${port}`).put("/sites").send(updatedSite);
+            expect(res.status).toBe(500);
+            expect(res.text).toBe("Test Error");
+        });
+
+        it("should handle error in deleteSiteController", async () => {
+            const res = await request(`http://localhost:${port}`).delete("/sites/Site%20A");
+            expect(res.status).toBe(500);
+            expect(res.text).toBe("Test Error");
+        });
     });
 });
