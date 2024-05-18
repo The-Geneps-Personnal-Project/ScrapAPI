@@ -160,6 +160,16 @@ export const updateManga = async (manga: MangaInfo): Promise<void> => {
     );
 };
 
+export const updateMangaChapter = async (mangaName: string, chapter: string): Promise<void> => {
+    const db = await getDb();
+
+    const manga: MangaInfo | undefined = await db.get("SELECT * FROM mangas WHERE name = ?", [mangaName]);
+
+    if (!manga) return;
+
+    await db.run("UPDATE mangas SET chapter = ? WHERE id = ?", [chapter, manga.id]);
+}
+
 export const deleteManga = async (name: string): Promise<void> => {
     const db = await getDb();
 

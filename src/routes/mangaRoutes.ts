@@ -8,6 +8,7 @@ import {
     updateMangaController,
     deleteMangaController,
     deleteSiteFromMangaController,
+    updateMangaChapterController,
 } from "../controllers/mangasControllers";
 
 const mangaRouter = Router();
@@ -18,6 +19,7 @@ mangaRouter.get("/site/:site", getMangaFromSiteController);
 mangaRouter.post("/", addMangaController);
 mangaRouter.post("/site", addSiteToMangaController);
 mangaRouter.put("/", updateMangaController);
+mangaRouter.put("/chapter", updateMangaChapterController);
 mangaRouter.delete("/site", deleteSiteFromMangaController);
 mangaRouter.delete("/:name", deleteMangaController);
 

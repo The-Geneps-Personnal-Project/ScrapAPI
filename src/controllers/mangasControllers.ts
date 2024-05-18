@@ -7,6 +7,7 @@ import {
     addManga,
     addSiteToManga,
     updateManga,
+    updateMangaChapter,
     deleteManga,
     deleteSiteFromManga,
 } from "../models/mangaModel";
@@ -94,6 +95,17 @@ export const updateMangaController = async (
         return res.status(500).send((error as Error).message);
     }
 };
+
+export const updateMangaChapterController = async (req: Request, res: Response) => {
+    const { name, chapter } = req.body;
+
+    try {
+        await updateMangaChapter(name, chapter as string);
+        return res.status(200).send("Manga chapter updated");
+    } catch (error) {
+        return res.status(500).send((error as Error).message);
+    }
+}
 
 export const deleteMangaController = async (
     req: Request,

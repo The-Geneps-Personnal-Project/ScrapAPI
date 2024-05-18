@@ -9,6 +9,7 @@ import {
     deleteManga,
     deleteSiteFromManga,
     MangaInfo,
+    updateMangaChapter,
 } from "../../src/models/mangaModel";
 import { SiteInfo } from "../../src/models/siteModel";
 
@@ -238,6 +239,31 @@ describe("Manga Model", () => {
             ]);
         });
     });
+
+    describe("updateMangaChapter", () => {
+        it("should update the chapter of an existing manga", async () => {
+            const name = "Manga One";
+            const chapter = "Chapter 20";
+
+            mockDb.get.mockResolvedValueOnce({ id: 1 });
+            mockDb.run.mockResolvedValueOnce(undefined);
+
+            await updateMangaChapter(name, chapter);
+
+            expect(mockDb.run).toHaveBeenCalledWith("UPDATE mangas SET chapter = ? WHERE id = ?", [chapter, 1]);
+        });
+
+        it("should not update a manga if it is not found", async () => {
+            const name = "NonExistentManga";
+            const chapter = "Chapter 20";
+
+            mockDb.get.mockResolvedValueOnce(undefined);
+
+            await updateMangaChapter(name, chapter);
+
+            expect(mockDb.run).not.toHaveBeenCalled();
+        });
+    })
 
     describe("deleteManga", () => {
         it("should delete an existing manga", async () => {

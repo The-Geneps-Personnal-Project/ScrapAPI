@@ -135,6 +135,29 @@ describe("Manga API", () => {
         expect(getRes.body).toHaveProperty("chapter", "Chapter 15");
     });
 
+    it("should update the chapter of an existing manga", async () => {
+        jest.spyOn(mangaModel, "updateMangaChapter").mockResolvedValue();
+
+        const updatedManga = { name: "Manga One", chapter: "Chapter 20" };
+        const res = await request(`http://localhost:${port}`).put("/mangas/chapter").send(updatedManga);
+        expect(res.status).toBe(200);
+        expect(res.text).toBe("Manga chapter updated");
+
+        const mockManga: MangaInfo = {
+            id: 1,
+            anilist_id: 1,
+            name: "Manga One",
+            chapter: "Chapter 20",
+            alert: 0,
+            sites: [],
+        };
+
+        jest.spyOn(mangaModel, "getMangaFromName").mockResolvedValue(mockManga);
+
+        const getRes = await request(`http://localhost:${port}`).get("/mangas/Manga%20One");
+        expect(getRes.body).toHaveProperty("chapter", "Chapter 20");
+    });
+
     it("should delete a manga", async () => {
         jest.spyOn(mangaModel, "deleteManga").mockResolvedValue();
 
@@ -223,6 +246,9 @@ describe("Manga API", () => {
             jest.spyOn(mangaModel, "updateManga").mockImplementation(() => {
                 throw new Error("Test Error");
             });
+            jest.spyOn(mangaModel, "updateMangaChapter").mockImplementation(() => {
+                throw new Error("Test Error");
+            });
             jest.spyOn(mangaModel, "deleteManga").mockImplementation(() => {
                 throw new Error("Test Error");
             });
@@ -273,6 +299,13 @@ describe("Manga API", () => {
         it("should handle error in updateMangaController", async () => {
             const updatedManga = { anilist_id: 1, name: "Manga One", chapter: "Chapter 15", alert: 1, sites: [] };
             const res = await request(`http://localhost:${port}`).put("/mangas").send(updatedManga);
+            expect(res.status).toBe(500);
+            expect(res.text).toBe("Test Error");
+        });
+
+        it("should handle error in updateMangaChapterController", async () => {
+            const updatedManga = { name: "Manga One", chapter: "Chapter 20" };
+            const res = await request(`http://localhost:${port}`).put("/mangas/chapter").send(updatedManga);
             expect(res.status).toBe(500);
             expect(res.text).toBe("Test Error");
         });
