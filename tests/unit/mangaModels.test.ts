@@ -138,7 +138,6 @@ describe("Manga Model", () => {
                 anilist_id: 123,
                 name: "Manga Three",
                 chapter: "Chapter 3",
-                alert: 0,
                 sites: [
                     {
                         id: 1,
@@ -157,7 +156,7 @@ describe("Manga Model", () => {
 
             expect(mockDb.run).toHaveBeenCalledWith(
                 "INSERT INTO mangas (anilist_id, name, chapter, alert) VALUES (?, ?, ?, ?)",
-                [newManga.anilist_id, newManga.name, newManga.chapter, newManga.alert]
+                [newManga.anilist_id, newManga.name, newManga.chapter, 1]
             );
             expect(mockDb.run).toHaveBeenCalledWith(
                 "INSERT INTO manga_sites (manga_id, site_id) VALUES (?, ?)",
@@ -263,7 +262,7 @@ describe("Manga Model", () => {
 
             expect(mockDb.run).not.toHaveBeenCalled();
         });
-    })
+    });
 
     describe("deleteManga", () => {
         it("should delete an existing manga", async () => {

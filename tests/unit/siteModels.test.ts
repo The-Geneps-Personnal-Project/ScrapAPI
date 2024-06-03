@@ -96,11 +96,10 @@ describe("Site Model", () => {
 
             await addSite(newSite);
 
-            expect(mockDb.run).toHaveBeenCalledWith("INSERT INTO sites (site, url, chapter_url) VALUES (?, ?, ?)", [
-                newSite.site,
-                newSite.url,
-                newSite.chapter_url,
-            ]);
+            expect(mockDb.run).toHaveBeenCalledWith(
+                "INSERT INTO sites (site, url, chapter_url, chapter_limiter) VALUES (?, ?, ?, ?)",
+                [newSite.site, newSite.url, newSite.chapter_url, newSite.chapter_limiter]
+            );
         });
     });
 
@@ -117,11 +116,10 @@ describe("Site Model", () => {
 
             await updateSite(updatedSite);
 
-            expect(mockDb.run).toHaveBeenCalledWith("UPDATE sites SET url = ?, chapter_url = ? WHERE site = ?", [
-                updatedSite.url,
-                updatedSite.chapter_url,
-                updatedSite.site,
-            ]);
+            expect(mockDb.run).toHaveBeenCalledWith(
+                "UPDATE sites SET url = ?, chapter_limiter = ?, chapter_url = ? WHERE site = ?",
+                [updatedSite.url, updatedSite.chapter_limiter, updatedSite.chapter_url, updatedSite.site]
+            );
         });
     });
 

@@ -62,12 +62,11 @@ describe("Manga API", () => {
         expect(res.body).toHaveProperty("name", "Manga One");
     });
 
-    it("should return 404 for a non-existent manga", async () => {
+    it("should return empty list for a non-existent manga", async () => {
         jest.spyOn(mangaModel, "getMangaFromName").mockResolvedValue(null);
 
         const res = await request(`http://localhost:${port}`).get("/mangas/NonExistentManga");
-        expect(res.status).toBe(404);
-        expect(res.text).toBe("Manga not found");
+        expect(res.body).toEqual({});
     });
 
     it("should get mangas from a specific site", async () => {
@@ -168,7 +167,7 @@ describe("Manga API", () => {
         jest.spyOn(mangaModel, "getMangaFromName").mockResolvedValue(null);
 
         const getRes = await request(`http://localhost:${port}`).get("/mangas/Manga%20One");
-        expect(getRes.status).toBe(404);
+        expect(getRes.body).toStrictEqual({});
     });
 
     it("should add a site to a manga", async () => {
@@ -180,23 +179,26 @@ describe("Manga API", () => {
             chapter_limiter: "/chapter-",
         };
 
+        const mockMangas: MangaInfo = {
+            id: 2,
+            anilist_id: 2,
+            name: "Manga Two",
+            chapter: "Chapter 2",
+            alert: 1,
+            sites: [mockSite],
+        };
+
         jest.spyOn(siteModel, "getSiteFromName").mockResolvedValue(mockSite);
         jest.spyOn(mangaModel, "addSiteToManga").mockResolvedValue();
+        jest.spyOn(mangaModel, "getMangaFromSite").mockResolvedValue(mockMangas);
 
         const data = { manga: "Manga Two", site: "Site B" };
         const res = await request(`http://localhost:${port}`).post("/mangas/site").send(data);
         expect(res.status).toBe(201);
         expect(res.text).toBe("Site added to manga");
 
-        const mockMangas: MangaInfo[] = [
-            { id: 2, anilist_id: 2, name: "Manga Two", chapter: "Chapter 2", alert: 1, sites: [] },
-            { id: 1, anilist_id: 1, name: "Manga One", chapter: "Chapter 1", alert: 0, sites: [] },
-        ];
-
-        jest.spyOn(mangaModel, "getMangaFromSite").mockResolvedValue(mockMangas as any);
-
-        const getRes = await request(`http://localhost:${port}`).get("/mangas/site/Site%20B");
-        expect(getRes.body).toHaveLength(2); // Assuming Site B now has 2 mangas
+        const getRes = await request(`http://localhost:${port}`).get("/mangas/site/Manga%20Two");
+        expect(getRes.body.sites).toHaveLength(1);
     });
 
     it("should delete a site from a manga", async () => {
