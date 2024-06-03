@@ -77,12 +77,11 @@ describe("Site API", () => {
         expect(res.body).toHaveProperty("site", "Site A");
     });
 
-    it("should return 404 for a non-existent site", async () => {
+    it("should return empty list for a non-existent site", async () => {
         jest.spyOn(siteModel, "getSiteFromName").mockResolvedValue(null as any);
 
         const res = await request(`http://localhost:${port}`).get("/sites/NonExistentSite");
-        expect(res.status).toBe(404);
-        expect(res.text).toBe("Site not found");
+        expect(res.body).toEqual({});
     });
 
     it("should create a new site", async () => {
@@ -158,14 +157,14 @@ describe("Site API", () => {
     it("should delete a site", async () => {
         jest.spyOn(siteModel, "deleteSite").mockResolvedValue();
 
-        const res = await request(`http://localhost:${port}`).delete("/sites/Site%20A");
+        const res = await request(`http://localhost:${port}`).delete("/sites").query({ name: "Site A" });
         expect(res.status).toBe(200);
         expect(res.text).toBe("Site deleted");
 
         jest.spyOn(siteModel, "getSiteFromName").mockResolvedValue(null as any);
 
         const getRes = await request(`http://localhost:${port}`).get("/sites/Site%20A");
-        expect(getRes.status).toBe(404);
+        expect(getRes.body).toStrictEqual({});
     });
 
     describe("Error Handling", () => {
@@ -228,7 +227,7 @@ describe("Site API", () => {
         });
 
         it("should handle error in deleteSiteController", async () => {
-            const res = await request(`http://localhost:${port}`).delete("/sites/Site%20A");
+            const res = await request(`http://localhost:${port}`).delete("/sites").query({ name: "Site A" });
             expect(res.status).toBe(500);
             expect(res.text).toBe("Test Error");
         });
