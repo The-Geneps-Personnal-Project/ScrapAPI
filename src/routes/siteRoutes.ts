@@ -13,6 +13,6 @@ siteRouter.get("/", getSitesController);
 siteRouter.get("/:name", getSiteFromNameController);
 siteRouter.post("/", addSiteController);
 siteRouter.put("/", updateSiteController);
-siteRouter.delete("/:name", deleteSiteController);
+siteRouter.delete("/", deleteSiteController);
 
 export default siteRouter;

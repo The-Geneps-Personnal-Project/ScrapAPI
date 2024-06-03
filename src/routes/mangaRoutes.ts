@@ -15,7 +15,7 @@ const mangaRouter = Router();
 
 mangaRouter.get("/", getMangasController);
 mangaRouter.get("/:name", getMangaFromNameController);
-mangaRouter.get("/site/:site", getMangaFromSiteController);
+mangaRouter.get("/site/:name", getMangaFromSiteController);
 mangaRouter.post("/", addMangaController);
 mangaRouter.post("/site", addSiteToMangaController);
 mangaRouter.put("/", updateMangaController);
