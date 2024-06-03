@@ -118,7 +118,7 @@ export const addManga = async (manga: MangaInfo): Promise<void> => {
         manga.anilist_id,
         manga.name,
         manga.chapter,
-        manga.alert,
+        manga.alert ? manga.alert : 1,
     ]);
 
     const mangaId: number = (await db.get("SELECT last_insert_rowid() as id")).id;
@@ -168,7 +168,7 @@ export const updateMangaChapter = async (mangaName: string, chapter: string): Pr
     if (!manga) return;
 
     await db.run("UPDATE mangas SET chapter = ? WHERE id = ?", [chapter, manga.id]);
-}
+};
 
 export const deleteManga = async (name: string): Promise<void> => {
     const db = await getDb();

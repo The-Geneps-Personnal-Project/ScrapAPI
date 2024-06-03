@@ -27,17 +27,23 @@ export const getSiteFromName = async (name: string): Promise<SiteInfo> => {
 export const addSite = async (site: SiteInfo): Promise<void> => {
     const db = await getDb();
 
-    await db.run("INSERT INTO sites (site, url, chapter_url) VALUES (?, ?, ?)", [
+    await db.run("INSERT INTO sites (site, url, chapter_url, chapter_limiter) VALUES (?, ?, ?, ?)", [
         site.site,
         site.url,
         site.chapter_url,
+        site.chapter_limiter,
     ]);
 };
 
 export const updateSite = async (site: SiteInfo): Promise<void> => {
     const db = await getDb();
 
-    await db.run("UPDATE sites SET url = ?, chapter_url = ? WHERE site = ?", [site.url, site.chapter_url, site.site]);
+    await db.run("UPDATE sites SET url = ?, chapter_limiter = ?, chapter_url = ? WHERE site = ?", [
+        site.url,
+        site.chapter_limiter,
+        site.chapter_url,
+        site.site,
+    ]);
 };
 
 export const deleteSite = async (name: string): Promise<void> => {
