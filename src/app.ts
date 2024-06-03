@@ -4,6 +4,9 @@ import { closeDb } from "./db/dbConfig";
 import siteRouter from "./routes/siteRoutes";
 import mangaRouter from "./routes/mangaRoutes";
 import { Server } from "http";
+import dotenv from "dotenv";
+
+dotenv.config({ path: ".env" });
 
 const PORT = process.env.PORT || 8080;
 let server: Server;

@@ -6,7 +6,11 @@ let db: Database<sqlite3.Database, sqlite3.Statement> | null = null;
 export const getDb = async (isTest = false): Promise<Database<sqlite3.Database, sqlite3.Statement>> => {
     if (!db) {
         db = await open({
-            filename: isTest ? ":memory:" : "database.sqlite",
+            filename: isTest
+                ? ":memory:"
+                : process.env.NODE_ENV === "development"
+                  ? process.env.DB_NAME_TEST!
+                  : process.env.DB_NAME!,
             driver: sqlite3.Database,
         });
     }
