@@ -1,0 +1,7 @@
+{
+	"uid": "scrap_api",
+	"append": false,
+	"watch": false,
+	"script": "/dist/app.js",
+	"sourceDir": "/home/pi/ScrapAPI"
+}
