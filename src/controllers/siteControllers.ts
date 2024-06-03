@@ -21,7 +21,6 @@ export const getSiteFromNameController = async (
 
     try {
         const site = await getSiteFromName(name);
-        if (!site) return res.status(404).send("Site not found");
 
         return res.status(200).send(site);
     } catch (error) {
@@ -48,8 +47,10 @@ export const updateSiteController = async (
 
     try {
         await updateSite(site);
+        console.log("success");
         return res.status(200).send("Site updated");
     } catch (error) {
+        console.log(error);
         return res.status(500).send((error as Error).message);
     }
 };
@@ -58,7 +59,7 @@ export const deleteSiteController = async (
     req: Request,
     res: Response
 ): Promise<Response<any, Record<string, any>>> => {
-    const name: string = req.params.name;
+    const name: string = req.query.name as string;
 
     try {
         await deleteSite(name);
