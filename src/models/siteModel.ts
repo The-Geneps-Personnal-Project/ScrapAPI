@@ -50,4 +50,5 @@ export const deleteSite = async (name: string): Promise<void> => {
     const db = await getDb();
 
     await db.run("DELETE FROM sites WHERE site = ?", [name]);
+    await db.run("DELETE FROM manga_sites WHERE site_id = ?", [name]);
 };

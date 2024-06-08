@@ -47,10 +47,8 @@ export const updateSiteController = async (
 
     try {
         await updateSite(site);
-        console.log("success");
         return res.status(200).send("Site updated");
     } catch (error) {
-        console.log(error);
         return res.status(500).send((error as Error).message);
     }
 };

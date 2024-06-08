@@ -9,11 +9,11 @@ let server: Server;
 let port: number;
 
 beforeAll(async () => {
-    await getDb(true); // Initialize the in-memory database for testing
+    await getDb(true);
 });
 
 afterAll(async () => {
-    await closeDb(); // Close the database connection after all tests
+    await closeDb();
 });
 
 beforeEach(done => {
@@ -50,7 +50,7 @@ describe("Site API", () => {
 
         const res = await request(`http://localhost:${port}`).get("/sites");
         expect(res.status).toBe(200);
-        expect(res.body).toHaveLength(2); // Assuming there are 2 sites initially
+        expect(res.body).toHaveLength(2);
     });
 
     it("should return 404 if there are no sites", async () => {
@@ -124,7 +124,7 @@ describe("Site API", () => {
         jest.spyOn(siteModel, "getSites").mockResolvedValue(mockSites);
 
         const getRes = await request(`http://localhost:${port}`).get("/sites");
-        expect(getRes.body).toHaveLength(3); // Now there should be 3 sites
+        expect(getRes.body).toHaveLength(3);
     });
 
     it("should update an existing site", async () => {

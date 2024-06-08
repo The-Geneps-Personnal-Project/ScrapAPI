@@ -11,11 +11,11 @@ let server: Server;
 let port: number;
 
 beforeAll(async () => {
-    await getDb(true); // Initialize the in-memory database for testing
+    await getDb(true);
 });
 
 afterAll(async () => {
-    await closeDb(); // Close the database connection after all tests
+    await closeDb();
 });
 
 beforeEach(done => {
@@ -42,7 +42,7 @@ describe("Manga API", () => {
 
         const res = await request(`http://localhost:${port}`).get("/mangas");
         expect(res.status).toBe(200);
-        expect(res.body).toHaveLength(4); // Assuming there are 4 mangas initially
+        expect(res.body).toHaveLength(4);
     });
 
     it("should get a manga by name", async () => {
@@ -79,13 +79,25 @@ describe("Manga API", () => {
 
         const res = await request(`http://localhost:${port}`).get("/mangas/site/Site%20A");
         expect(res.status).toBe(200);
-        expect(res.body).toHaveLength(2); // Assuming Site A has 2 mangas
+        expect(res.body).toHaveLength(2);
     });
 
     it("should create a new manga", async () => {
         jest.spyOn(mangaModel, "addManga").mockResolvedValue();
 
-        const newManga: MangaInfo = { anilist_id: 5, name: "Manga Five", chapter: "Chapter 50", alert: 0, sites: [] };
+        const newManga: MangaInfo = {
+            anilist_id: 5,
+            name: "Manga Five",
+            chapter: "Chapter 50",
+            alert: 0,
+            sites: [],
+            infos: {
+                tags: [{ name: "Drama" }],
+                description: "A dramatic new manga.",
+                coverImage: { medium: "https://example.com/cover5.jpg" },
+            },
+        };
+
         const res = await request(`http://localhost:${port}`).post("/mangas").send(newManga);
         expect(res.status).toBe(201);
         expect(res.text).toBe("Manga added");
@@ -101,7 +113,7 @@ describe("Manga API", () => {
         jest.spyOn(mangaModel, "getMangaList").mockResolvedValue(mockMangas);
 
         const getRes = await request(`http://localhost:${port}`).get("/mangas");
-        expect(getRes.body).toHaveLength(5); // Now there should be 5 mangas
+        expect(getRes.body).toHaveLength(5);
     });
 
     it("should update an existing manga", async () => {
@@ -111,7 +123,7 @@ describe("Manga API", () => {
             id: 1,
             anilist_id: 1,
             name: "Manga One",
-            chapter: "Chapter 15",
+            chapter: "15",
             alert: 1,
             sites: [],
         };
@@ -123,7 +135,7 @@ describe("Manga API", () => {
             id: 1,
             anilist_id: 1,
             name: "Manga One",
-            chapter: "Chapter 15",
+            chapter: "15",
             alert: 1,
             sites: [],
         };
@@ -131,13 +143,13 @@ describe("Manga API", () => {
         jest.spyOn(mangaModel, "getMangaFromName").mockResolvedValue(mockManga);
 
         const getRes = await request(`http://localhost:${port}`).get("/mangas/Manga%20One");
-        expect(getRes.body).toHaveProperty("chapter", "Chapter 15");
+        expect(getRes.body).toHaveProperty("chapter", "15");
     });
 
     it("should update the chapter of an existing manga", async () => {
         jest.spyOn(mangaModel, "updateMangaChapter").mockResolvedValue();
 
-        const updatedManga = { name: "Manga One", chapter: "Chapter 20" };
+        const updatedManga = { name: "Manga One", chapter: "20" };
         const res = await request(`http://localhost:${port}`).put("/mangas/chapter").send(updatedManga);
         expect(res.status).toBe(200);
         expect(res.text).toBe("Manga chapter updated");
@@ -146,7 +158,7 @@ describe("Manga API", () => {
             id: 1,
             anilist_id: 1,
             name: "Manga One",
-            chapter: "Chapter 20",
+            chapter: "20",
             alert: 0,
             sites: [],
         };
@@ -154,13 +166,13 @@ describe("Manga API", () => {
         jest.spyOn(mangaModel, "getMangaFromName").mockResolvedValue(mockManga);
 
         const getRes = await request(`http://localhost:${port}`).get("/mangas/Manga%20One");
-        expect(getRes.body).toHaveProperty("chapter", "Chapter 20");
+        expect(getRes.body).toHaveProperty("chapter", "20");
     });
 
     it("should delete a manga", async () => {
         jest.spyOn(mangaModel, "deleteManga").mockResolvedValue();
 
-        const res = await request(`http://localhost:${port}`).delete("/mangas/Manga%20One");
+        const res = await request(`http://localhost:${port}`).delete("/mangas/").send("Manga One");
         expect(res.status).toBe(200);
         expect(res.text).toBe("Manga deleted");
 
@@ -183,7 +195,7 @@ describe("Manga API", () => {
             id: 2,
             anilist_id: 2,
             name: "Manga Two",
-            chapter: "Chapter 2",
+            chapter: "2",
             alert: 1,
             sites: [mockSite],
         };
@@ -225,7 +237,7 @@ describe("Manga API", () => {
         jest.spyOn(mangaModel, "getMangaFromSite").mockResolvedValue(mockMangas as any);
 
         const getRes = await request(`http://localhost:${port}`).get("/mangas/site/Site%20B");
-        expect(getRes.body).toHaveLength(1); // Assuming Site B now has 1 manga
+        expect(getRes.body).toHaveLength(1);
     });
 
     describe("Error Handling", () => {
@@ -313,7 +325,7 @@ describe("Manga API", () => {
         });
 
         it("should handle error in deleteMangaController", async () => {
-            const res = await request(`http://localhost:${port}`).delete("/mangas/Manga%20One");
+            const res = await request(`http://localhost:${port}`).delete("/mangas/").send("Manga One");
             expect(res.status).toBe(500);
             expect(res.text).toBe("Test Error");
         });
