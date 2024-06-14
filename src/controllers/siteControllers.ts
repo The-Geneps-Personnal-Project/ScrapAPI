@@ -5,7 +5,6 @@ import { addSite, getSiteFromName, getSites } from "../models/siteModel";
 export const getSitesController = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
     try {
         const sites: SiteInfo[] = await getSites();
-        if (sites.length === 0) return res.status(404).send("No sites found");
 
         return res.status(200).send(sites);
     } catch (error) {
