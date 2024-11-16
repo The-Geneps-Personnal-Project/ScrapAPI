@@ -100,8 +100,8 @@ export const getMangaFromName = async (name: string): Promise<MangaInfo | null> 
         alert: manga.alert,
         last_update: manga.last_update ?? "",
         infos: {
-            description: manga.infos?.description ?? "",
-            coverImage: manga.infos?.coverImage ?? { medium: "" },
+            description: manga.description ?? "",
+            coverImage: manga.coverImage ?? { medium: "" },
             tags: tagsInfo,
         },
     };
@@ -149,8 +149,8 @@ export const getMangaFromSite = async (site: string): Promise<MangaInfo | null> 
         alert: manga.alert,
         last_update: manga.last_update ?? "",
         infos: {
-            description: manga.infos?.description ?? "",
-            coverImage: manga.infos?.coverImage ?? { medium: "" },
+            description: manga.description ?? "",
+            coverImage: manga.coverImage ?? { medium: "" },
             tags: tagsInfo,
         },
     };
