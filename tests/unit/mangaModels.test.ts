@@ -245,6 +245,11 @@ describe("Manga Model", () => {
                         chapter_limiter: "",
                     },
                 ],
+                infos: {
+                    description: "An updated exciting adventure manga.",
+                    coverImage: { medium: "https://example.com/cover-updated.jpg" },
+                    tags: [],
+                }
             };
 
             mockDb.run.mockResolvedValueOnce(undefined);
@@ -252,11 +257,10 @@ describe("Manga Model", () => {
             await updateManga(updatedManga);
 
             expect(mockDb.run).toHaveBeenCalledWith(
-                "UPDATE mangas SET anilist_id = ?, name = ?, chapter = ?, alert = ? WHERE id = ?",
-                [updatedManga.anilist_id, updatedManga.name, updatedManga.chapter, updatedManga.alert, updatedManga.id]
+                "UPDATE mangas SET anilist_id = ?, name = ?, chapter = ?, alert = ?, description = ?, coverImage = ? WHERE id = ?",
+                [updatedManga.anilist_id, updatedManga.name, updatedManga.chapter, updatedManga.alert, updatedManga.infos?.description, updatedManga.infos?.coverImage.medium, updatedManga.id]
             );
-            expect(mockDb.run).toHaveBeenCalledWith("DELETE FROM manga_sites WHERE manga_id = ?", [updatedManga.id]);
-            expect(mockDb.run).toHaveBeenCalledWith("INSERT INTO manga_sites (manga_id, site_id) VALUES (?, ?)", [
+            expect(mockDb.run).toHaveBeenCalledWith("INSERT INTO OR IGNORE manga_sites (manga_id, site_id) VALUES (?, ?)", [
                 updatedManga.id,
                 1,
             ]);

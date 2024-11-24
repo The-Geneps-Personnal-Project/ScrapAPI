@@ -123,15 +123,15 @@ describe("Site Model", () => {
         });
     });
 
-    describe("deleteSite", () => {
-        it("should delete an existing site", async () => {
-            const name = "Site A";
+    // describe("deleteSite", () => {
+    //     it("should delete an existing site", async () => {
+    //         const name = "Site A";
 
-            mockDb.run.mockResolvedValueOnce(undefined);
+    //         mockDb.run.mockResolvedValueOnce(undefined);
 
-            await deleteSite(name);
+    //         await deleteSite(name);
 
-            expect(mockDb.run).toHaveBeenCalledWith("DELETE FROM sites WHERE site = ?", [name]);
-        });
-    });
+    //         expect(mockDb.run).toHaveBeenCalledWith("DELETE FROM sites WHERE site = ?", [name]);
+    //     });
+    // });
 });

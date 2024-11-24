@@ -57,8 +57,8 @@ describe("Site API", () => {
         jest.spyOn(siteModel, "getSites").mockResolvedValue([]);
 
         const res = await request(`http://localhost:${port}`).get("/sites");
-        expect(res.status).toBe(404);
-        expect(res.text).toBe("No sites found");
+        expect(res.status).toBe(200);
+        expect(res.body).toHaveLength(0);
     });
 
     it("should get a site by name", async () => {

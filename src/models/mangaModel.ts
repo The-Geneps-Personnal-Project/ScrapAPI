@@ -17,6 +17,19 @@ export interface MangaInfo {
     };
 }
 
+const createTags = async (tags: { name: string }[]): Promise<void> => {
+    const db = await getDb();
+
+    await Promise.all(
+        tags.map(async tag => {
+            const existingTag = await db.get("SELECT id FROM tags WHERE name = ?", [tag.name]);
+            if (!existingTag) {
+                await db.run("INSERT INTO tags (name) VALUES (?)", [tag.name]);
+            }
+        })
+    );
+}
+
 export const getMangaList = async (): Promise<MangaInfo[]> => {
     const db = await getDb();
 
@@ -160,14 +173,7 @@ export const addManga = async (manga: MangaInfo): Promise<void> => {
     const db = await getDb();
 
     if (manga.infos?.tags) {
-        await Promise.all(
-            manga.infos.tags.map(async tag => {
-                const existingTag = await db.get("SELECT id FROM tags WHERE name = ?", [tag.name]);
-                if (!existingTag) {
-                    await db.run("INSERT INTO tags (name) VALUES (?)", [tag.name]);
-                }
-            })
-        );
+        await createTags(manga.infos.tags);
     }
 
     await db.run(
@@ -213,19 +219,30 @@ export const addSiteToManga = async (mangaName: string, site: SiteInfo): Promise
 export const updateManga = async (manga: MangaInfo): Promise<void> => {
     const db = await getDb();
 
-    await db.run("UPDATE mangas SET anilist_id = ?, name = ?, chapter = ?, alert = ? WHERE id = ?", [
+    await db.run("UPDATE mangas SET anilist_id = ?, name = ?, chapter = ?, alert = ?, description = ?, coverImage = ? WHERE id = ?", [
         manga.anilist_id,
         manga.name,
         manga.chapter,
         manga.alert,
+        manga.infos?.description || "",
+        manga.infos?.coverImage?.medium || "",
         manga.id,
     ]);
 
-    await db.run("DELETE FROM manga_sites WHERE manga_id = ?", [manga.id]);
+    if (manga.infos?.tags) {
+        await createTags(manga.infos.tags);
+
+        await Promise.all(
+            manga.infos.tags.map(async tag => {
+                const tagId = (await db.get("SELECT id FROM tags WHERE name = ?", [tag.name])).id;
+                await db.run("INSERT INTO manga_tags (manga_id, tag_id) VALUES (?, ?)", [manga.id, tagId]);
+            })
+        );
+    }
 
     await Promise.all(
         manga.sites.map(async site => {
-            await db.run("INSERT INTO manga_sites (manga_id, site_id) VALUES (?, ?)", [manga.id, site.id]);
+            await db.run("INSERT INTO OR IGNORE manga_sites (manga_id, site_id) VALUES (?, ?)", [manga.id, site.id]);
         })
     );
 };
