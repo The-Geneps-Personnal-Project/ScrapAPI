@@ -240,11 +240,11 @@ export const updateManga = async (manga: MangaInfo): Promise<void> => {
         );
     }
 
-    await Promise.all(
-        manga.sites.map(async site => {
-            await db.run("INSERT INTO OR IGNORE manga_sites (manga_id, site_id) VALUES (?, ?)", [manga.id, site.id]);
-        })
-    );
+    // await Promise.all(
+    //     manga.sites.map(async site => {
+    //         await db.run("INSERT INTO manga_sites (manga_id, site_id) VALUES (?, ?)", [manga.id, site.id]);
+    //     })
+    // );
 };
 
 export const updateMangaChapter = async (mangaName: string, chapter: string, updated: String): Promise<void> => {
