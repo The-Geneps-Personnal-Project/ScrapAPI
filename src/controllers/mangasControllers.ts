@@ -96,10 +96,10 @@ export const updateMangaController = async (
 };
 
 export const updateMangaChapterController = async (req: Request, res: Response) => {
-    const { name, chapter, last_update } = req.body;
+    const { name, chapter, last_updated } = req.body;
 
     try {
-        await updateMangaChapter(name, chapter as string, last_update);
+        await updateMangaChapter(name, chapter as string, last_updated);
         return res.status(200).send("Manga chapter updated");
     } catch (error) {
         return res.status(500).send((error as Error).message);
