@@ -39,10 +39,11 @@ jobs:
         run: |
           set -e
           ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            set -e
             export NVM_DIR=\$HOME/.nvm && [ -s \$NVM_DIR/nvm.sh ] && . \$NVM_DIR/nvm.sh && nvm use --lts
             cd ~/ScrapAPI &&
             git pull &&
-            yarn install &&
-            yarn build &&
+            npm ci --no-audit --no-fund &&
+            npm run build &&
             forever restart scrap_api
           "
