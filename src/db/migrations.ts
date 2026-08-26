@@ -142,6 +142,22 @@ const migrations: Migration[] = [
             `);
         },
     },
+    {
+        id: 5,
+        name: "add manga status for must-watch entries",
+        up: async db => {
+            // Must-watch entries live in the same table as everything else, marked by
+            // this column. Existing rows are active, which is the historical behaviour.
+            const columns = await db.all<{ name: string }[]>("PRAGMA table_info(mangas)");
+            const present = new Set(columns.map(column => column.name));
+
+            if (!present.has("status")) {
+                await db.exec("ALTER TABLE mangas ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
+            }
+
+            await db.exec("CREATE INDEX IF NOT EXISTS idx_mangas_status ON mangas(status)");
+        },
+    },
 ];
 
 export async function runMigrations(db: Db): Promise<void> {
@@ -156,7 +172,7 @@ export async function runMigrations(db: Db): Promise<void> {
     const applied = await db.all<{ id: number }[]>("SELECT id FROM schema_migrations");
     const done = new Set(applied.map(row => row.id));
 
-    for (const migration of migrations) {
+    for (const migration of [...migrations].sort((a, b) => a.id - b.id)) {
         if (done.has(migration.id)) continue;
 
         logger.info({ id: migration.id, name: migration.name }, "Applying migration");

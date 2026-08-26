@@ -2,6 +2,8 @@ import { SiteInfo } from "./siteModel";
 import { replaceURL } from "../utils/utils";
 import { Db, getDb, withTransaction } from "../db/dbConfig";
 
+export type MangaStatus = "active" | "must_watch";
+
 export interface MangaInfo {
     id?: number;
     sites: SiteInfo[];
@@ -10,6 +12,8 @@ export interface MangaInfo {
     chapter: string;
     name: string;
     last_update?: string;
+    /** 'active' takes part in scraping and alerts; 'must_watch' is a backlog entry. */
+    status?: MangaStatus;
     infos?: {
         tags: { name: string }[];
         description: string;
@@ -30,6 +34,7 @@ interface MangaRow {
     coverImage: string | null;
     largeImage: string | null;
     last_update: string | null;
+    status: string | null;
 }
 
 /**
@@ -92,6 +97,7 @@ const toMangaInfo = async (db: Db, row: MangaRow): Promise<MangaInfo> => ({
     chapter: row.chapter,
     alert: row.alert,
     last_update: row.last_update ?? "",
+    status: (row.status as MangaStatus) ?? "active",
     infos: {
         description: row.description ?? "",
         coverImage: row.coverImage ?? "",
@@ -134,8 +140,8 @@ export const getMangasFromSite = async (site: string): Promise<MangaInfo[]> => {
 export const addManga = async (manga: MangaInfo): Promise<number> =>
     withTransaction(async db => {
         const result = await db.run(
-            `INSERT INTO mangas (anilist_id, name, chapter, alert, description, coverImage, largeImage)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO mangas (anilist_id, name, chapter, alert, description, coverImage, largeImage, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 manga.anilist_id,
                 manga.name,
@@ -145,6 +151,7 @@ export const addManga = async (manga: MangaInfo): Promise<number> =>
                 manga.infos?.description ?? "",
                 manga.infos?.coverImage ?? "",
                 manga.infos?.largeImage ?? "",
+                manga.status ?? "active",
             ]
         );
 
@@ -180,7 +187,7 @@ export const updateManga = async (manga: MangaInfo): Promise<boolean> =>
     withTransaction(async db => {
         const result = await db.run(
             `UPDATE mangas
-             SET anilist_id = ?, name = ?, chapter = ?, alert = ?, description = ?, coverImage = ?, largeImage = ?
+             SET anilist_id = ?, name = ?, chapter = ?, alert = ?, description = ?, coverImage = ?, largeImage = ?, status = ?
              WHERE id = ?`,
             [
                 manga.anilist_id,
@@ -190,6 +197,7 @@ export const updateManga = async (manga: MangaInfo): Promise<boolean> =>
                 manga.infos?.description ?? "",
                 manga.infos?.coverImage ?? "",
                 manga.infos?.largeImage ?? "",
+                manga.status ?? "active",
                 manga.id,
             ]
         );

@@ -30,6 +30,8 @@ export const mangaInfosSchema = z.object({
     largeImage: z.string().optional(),
 });
 
+export const mangaStatusSchema = z.enum(["active", "must_watch"]);
+
 export const createMangaSchema = z.object({
     anilist_id: z.coerce.number().int().nonnegative(),
     name: nonEmpty("name"),
@@ -37,6 +39,8 @@ export const createMangaSchema = z.object({
     // `alert` is nullish-defaulted, not truthy-defaulted: `alert: 0` used to be
     // silently flipped to 1 because 0 is falsy.
     alert: z.coerce.number().int().min(0).max(1).nullish().transform(value => value ?? 1),
+    // Must-watch entries sit in the same table, excluded from scraping by their status.
+    status: mangaStatusSchema.default("active"),
     sites: z.array(siteSchema.partial({ url: true, chapter_url: true, chapter_limiter: true })).default([]),
     infos: mangaInfosSchema.optional(),
 });
