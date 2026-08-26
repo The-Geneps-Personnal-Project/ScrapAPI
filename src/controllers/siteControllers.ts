@@ -1,67 +1,50 @@
 import { Request, Response } from "express";
-import { SiteInfo, deleteSite, updateSite } from "../models/siteModel";
-import { addSite, getSiteFromName, getSites } from "../models/siteModel";
 
-export const getSitesController = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
-    try {
-        const sites: SiteInfo[] = await getSites();
+import { SiteInfo, addSite, deleteSite, getSiteFromName, getSites, updateSite } from "../models/siteModel";
+import { ConflictError, NotFoundError } from "../errors";
+import { body, params, query } from "../middleware/validate";
+import { SitePayload } from "../schemas";
 
-        return res.status(200).send(sites);
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+export const getSitesController = async (_req: Request, res: Response) => {
+    res.status(200).json(await getSites());
 };
 
-export const getSiteFromNameController = async (
-    req: Request,
-    res: Response
-): Promise<Response<any, Record<string, any>>> => {
-    const name: string = req.params.name;
+export const getSiteFromNameController = async (_req: Request, res: Response) => {
+    const { name } = params<{ name: string }>(res);
+    const site = await getSiteFromName(name);
 
-    try {
-        const site = await getSiteFromName(name);
+    if (!site) throw new NotFoundError("Site", name);
 
-        return res.status(200).send(site);
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+    res.status(200).json(site);
 };
 
-export const addSiteController = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
-    const site: SiteInfo = req.body;
+export const addSiteController = async (_req: Request, res: Response) => {
+    const payload = body<SitePayload>(res);
 
-    try {
-        await addSite(site);
-        return res.status(201).send("Site added");
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
+    // Site names key every lookup (getSiteFromName, updateSite, deleteSite), so a
+    // duplicate would quietly corrupt all three. Nothing prevented one before.
+    if (await getSiteFromName(payload.site)) {
+        throw new ConflictError(`Site '${payload.site}' already exists`);
     }
+
+    const id = await addSite(payload as SiteInfo);
+    res.status(201).json({ id, site: payload.site });
 };
 
-export const updateSiteController = async (
-    req: Request,
-    res: Response
-): Promise<Response<any, Record<string, any>>> => {
-    const site: SiteInfo = req.body;
+export const updateSiteController = async (_req: Request, res: Response) => {
+    const payload = body<SitePayload>(res);
 
-    try {
-        await updateSite(site);
-        return res.status(200).send("Site updated");
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+    const updated = await updateSite(payload as SiteInfo);
+    if (!updated) throw new NotFoundError("Site", payload.site);
+
+    res.status(200).json({ site: payload.site });
 };
 
-export const deleteSiteController = async (
-    req: Request,
-    res: Response
-): Promise<Response<any, Record<string, any>>> => {
-    const name: string = req.query.name as string;
+export const deleteSiteController = async (_req: Request, res: Response) => {
+    const { name } = query<{ name: string }>(res);
 
-    try {
-        await deleteSite(name);
-        return res.status(200).send("Site deleted");
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+    const deleted = await deleteSite(name);
+    if (!deleted) throw new NotFoundError("Site", name);
+
+    res.status(200).json({ name });
 };

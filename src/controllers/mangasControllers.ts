@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
-import { MangaInfo } from "../models/mangaModel";
+
 import {
+    MangaInfo,
     getMangaList,
     getMangaFromName,
-    getMangaFromSite,
+    getMangasFromSite,
     addManga,
     addSiteToManga,
     updateManga,
@@ -12,125 +13,100 @@ import {
     deleteSiteFromManga,
 } from "../models/mangaModel";
 import { getSiteFromName } from "../models/siteModel";
+import { ConflictError, NotFoundError } from "../errors";
+import { body, params, query } from "../middleware/validate";
+import {
+    CreateMangaPayload,
+    UpdateMangaPayload,
+} from "../schemas";
 
-export const getMangasController = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
-    try {
-        const mangas: MangaInfo[] = await getMangaList();
+/**
+ * Controllers no longer wrap themselves in try/catch. Throwing is the contract:
+ * `asyncHandler` forwards the rejection to the central error handler, which maps
+ * typed errors to status codes and keeps internal messages out of responses.
+ * Previously every failure — including "not found" — came back as a 500 carrying the
+ * raw SQL error text.
+ */
 
-        return res.status(200).send(mangas);
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+export const getMangasController = async (_req: Request, res: Response) => {
+    res.status(200).json(await getMangaList());
 };
 
-export const getMangaFromNameController = async (
-    req: Request,
-    res: Response
-): Promise<Response<any, Record<string, any>>> => {
-    const name: string = req.params.name as string;
+export const getMangaFromNameController = async (_req: Request, res: Response) => {
+    const { name } = params<{ name: string }>(res);
+    const manga = await getMangaFromName(name);
 
-    try {
-        const manga: MangaInfo | null = await getMangaFromName(name);
+    if (!manga) throw new NotFoundError("Manga", name);
 
-        return res.status(200).send(manga);
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+    res.status(200).json(manga);
 };
 
-export const getMangaFromSiteController = async (
-    req: Request,
-    res: Response
-): Promise<Response<any, Record<string, any>>> => {
-    const name: string = req.query.name as string;
+export const getMangaFromSiteController = async (_req: Request, res: Response) => {
+    // Reads the path parameter the route actually declares. It used to read
+    // `req.query.name` on a `/site/:name` route, so the endpoint always came back empty.
+    const { name } = params<{ name: string }>(res);
 
-    try {
-        const manga: MangaInfo | null = await getMangaFromSite(name);
-
-        return res.status(200).send(manga);
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+    res.status(200).json(await getMangasFromSite(name));
 };
 
-export const addMangaController = async (req: Request, res: Response): Promise<Response<any, Record<string, any>>> => {
-    let manga: MangaInfo = req.body;
+export const addMangaController = async (_req: Request, res: Response) => {
+    const payload = body<CreateMangaPayload>(res);
 
-    try {
-        if (!Array.isArray(manga.sites)) manga.sites = [manga.sites];
-
-        await addManga(manga);
-        return res.status(201).send("Manga added");
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
+    if (await getMangaFromName(payload.name)) {
+        throw new ConflictError(`Manga '${payload.name}' already exists`);
     }
+
+    const id = await addManga(payload as unknown as MangaInfo);
+    res.status(201).json({ id, name: payload.name });
 };
 
-export const addSiteToMangaController = async (
-    req: Request,
-    res: Response
-): Promise<Response<any, Record<string, any>>> => {
-    const { manga, site } = req.body;
+export const addSiteToMangaController = async (_req: Request, res: Response) => {
+    const { manga, site } = body<{ manga: string; site: string }>(res);
 
-    try {
-        const s = await getSiteFromName(site);
-        await addSiteToManga(manga, s);
-        return res.status(201).send("Site added to manga");
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+    const siteRecord = await getSiteFromName(site);
+    if (!siteRecord) throw new NotFoundError("Site", site);
+
+    const linked = await addSiteToManga(manga, siteRecord);
+    if (!linked) throw new NotFoundError("Manga", manga);
+
+    res.status(201).json({ manga, site });
 };
 
-export const updateMangaController = async (
-    req: Request,
-    res: Response
-): Promise<Response<any, Record<string, any>>> => {
-    const manga: MangaInfo = req.body;
+export const updateMangaController = async (_req: Request, res: Response) => {
+    const payload = body<UpdateMangaPayload>(res);
 
-    try {
-        await updateManga(manga);
-        return res.status(200).send("Manga updated");
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+    const updated = await updateManga(payload as unknown as MangaInfo);
+    if (!updated) throw new NotFoundError("Manga", payload.id);
+
+    res.status(200).json({ id: payload.id });
 };
 
-export const updateMangaChapterController = async (req: Request, res: Response) => {
-    const { name, chapter, last_updated } = req.body;
+export const updateMangaChapterController = async (_req: Request, res: Response) => {
+    const { name, chapter, last_updated } = body<{ name: string; chapter: string; last_updated?: string }>(res);
 
-    try {
-        await updateMangaChapter(name, chapter as string, last_updated);
-        return res.status(200).send("Manga chapter updated");
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+    const updated = await updateMangaChapter(name, chapter, last_updated);
+    if (!updated) throw new NotFoundError("Manga", name);
+
+    res.status(200).json({ name, chapter });
 };
 
-export const deleteMangaController = async (
-    req: Request,
-    res: Response
-): Promise<Response<any, Record<string, any>>> => {
-    const name: string = req.query.name as string;
+export const deleteMangaController = async (_req: Request, res: Response) => {
+    const { name } = query<{ name: string }>(res);
 
-    try {
-        await deleteManga(name);
-        return res.status(200).send("Manga deleted");
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+    const deleted = await deleteManga(name);
+    if (!deleted) throw new NotFoundError("Manga", name);
+
+    res.status(200).json({ name });
 };
 
-export const deleteSiteFromMangaController = async (
-    req: Request,
-    res: Response
-): Promise<Response<any, Record<string, any>>> => {
-    const { manga, site } = req.query;
+export const deleteSiteFromMangaController = async (_req: Request, res: Response) => {
+    const { manga, site } = query<{ manga: string; site: string }>(res);
 
-    try {
-        const s = await getSiteFromName(site as string);
-        await deleteSiteFromManga(manga as string, s);
-        return res.status(200).send("Site deleted from manga");
-    } catch (error) {
-        return res.status(500).send((error as Error).message);
-    }
+    const siteRecord = await getSiteFromName(site);
+    if (!siteRecord) throw new NotFoundError("Site", site);
+
+    const removed = await deleteSiteFromManga(manga, siteRecord);
+    if (!removed) throw new NotFoundError("Manga", manga);
+
+    res.status(200).json({ manga, site });
 };
