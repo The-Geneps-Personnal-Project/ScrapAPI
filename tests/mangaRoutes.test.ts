@@ -188,3 +188,49 @@ describe("error handling", () => {
         expect(JSON.stringify(response.body)).not.toMatch(/SQLITE_/);
     });
 });
+
+describe("manga status (must-watch)", () => {
+    it("defaults to active when omitted", async () => {
+        await request(app)
+            .post("/mangas")
+            .send({ anilist_id: 200, name: "Default Status", chapter: "1", sites: [] });
+
+        const created = await request(app).get("/mangas/Default%20Status");
+        expect(created.body.status).toBe("active");
+    });
+
+    it("stores a must_watch entry with alerts off", async () => {
+        const response = await request(app)
+            .post("/mangas")
+            .send({ anilist_id: 201, name: "Backlog Manga", chapter: "0", alert: 0, status: "must_watch", sites: [] });
+
+        expect(response.status).toBe(201);
+
+        const created = await request(app).get("/mangas/Backlog%20Manga");
+        expect(created.body.status).toBe("must_watch");
+        expect(created.body.alert).toBe(0);
+    });
+
+    it("promotes a must_watch entry to active", async () => {
+        const manga = (await request(app).get("/mangas/Backlog%20Manga")).body;
+
+        const response = await request(app)
+            .put("/mangas")
+            .send({ ...manga, status: "active", alert: 1 });
+
+        expect(response.status).toBe(200);
+
+        const updated = await request(app).get("/mangas/Backlog%20Manga");
+        expect(updated.body.status).toBe("active");
+        expect(updated.body.alert).toBe(1);
+    });
+
+    it("rejects an unknown status with 400", async () => {
+        const response = await request(app)
+            .post("/mangas")
+            .send({ anilist_id: 202, name: "Bad Status", chapter: "1", status: "someday", sites: [] });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error.code).toBe("VALIDATION_ERROR");
+    });
+});
